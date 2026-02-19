@@ -3,6 +3,7 @@
 #include <iostream>
 
 #define LOGTYPE_VALIDATION 10	// Green
+#define LOGTYPE_INFO 11		// Blue
 #define LOGTYPE_WARNING 14		// Yellow
 #define LOGTYPE_ERROR 12		// Red
 #define LOGTYPE_LOG 15			// White

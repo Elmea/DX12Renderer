@@ -7,6 +7,11 @@ add_requires("stb")
 add_packages("glfw")
 add_packages("stb")
 
+add_links("d3d12")
+add_links("dxgi")
+add_links("dxguid")
+add_links("d3dcompiler")
+
 target("DX12Renderer")
     set_kind("binary")
     add_files("src/**.cpp")

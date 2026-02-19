@@ -1,15 +1,13 @@
 #include "glfwWindow/Context.h"
 
+#include "Renderer.h"
+
 int main(int argc, char **argv) 
 {
-	Context context;
+	Renderer renderer;
 
-	context.Init(1200, 900, "DX12Renderer");
+	if (renderer.Init())
+		renderer.Run();
 
-	while (!context.ShouldClose())
-	{
-		context.StartFrame();
-	}
-
-	context.Destroy();
+	renderer.Destroy();
 }

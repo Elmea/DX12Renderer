@@ -12,7 +12,7 @@ public:
 
 
 public:
-	void Init(int winSizeX, int winSizeY, std::string name);
+	int Init(int winSizeX, int winSizeY, std::string name);
 	void Destroy();
 
 	void StartFrame();
