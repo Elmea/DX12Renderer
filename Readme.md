@@ -3,7 +3,7 @@ Update submodule
 git submodule update --init --recursive
 ```
 
-\## Generate Visual Studio Solution (Windows)
+### Generate Visual Studio Solution (Windows)
 
 To generate a Visual Studio `.sln` using xmake:
 ```bash
