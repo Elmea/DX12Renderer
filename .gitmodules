@@ -1,0 +1,3 @@
+[submodule "ThirdParty/ElmeasMaths"]
+	path = ThirdParty/ElmeasMaths
+	url = git@github.com:Elmea/ElmeasMaths.git
