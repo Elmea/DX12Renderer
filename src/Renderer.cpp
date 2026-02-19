@@ -85,6 +85,7 @@ int Renderer::Init()
 
 void Renderer::Run()
 {
+	DEBUG_LOG("Star running", LOGTYPE_INFO)
 	while (!context.ShouldClose())
 	{
 		context.StartFrame();
