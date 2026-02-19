@@ -1,3 +1,5 @@
+#include "Macros.h"
+
 #include "Context.h"
 
 void Context::Init(int winSizeX, int winSizeY, std::string name)
@@ -8,6 +10,15 @@ void Context::Init(int winSizeX, int winSizeY, std::string name)
 	window = glfwCreateWindow(winSizeX, winSizeX, name.c_str(), nullptr, nullptr);
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	if (!window)
+	{
+		DEBUG_LOG("Window cant be initialized", LOGTYPE_ERROR);
+	}
+	else
+	{
+		DEBUG_LOG("Window initialized", LOGTYPE_VALIDATION);
+	}
 }
 
 void Context::Destroy()
