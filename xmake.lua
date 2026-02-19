@@ -9,14 +9,15 @@ add_packages("stb")
 
 target("DX12Renderer")
     set_kind("binary")
-    add_files("src/*.cpp")
-    add_headerfiles("src/*.h")
-    add_headerfiles("src/*.hpp")
+    add_files("src/**.cpp")
+    add_headerfiles("src/**.h")
+    add_headerfiles("src/**.hpp")
+    add_includedirs("src")
 
     -- Third Party
     add_headerfiles("ThirdParty/(**.h)")
     add_headerfiles("ThirdParty/(**.hpp)")
-    add_headerfiles("ThirdParty/(**.c)")
+    add_files("ThirdParty/(**.c)")
     add_files("ThirdParty/(**.cpp)")
 
     add_includedirs("ThirdParty", {public = true})
