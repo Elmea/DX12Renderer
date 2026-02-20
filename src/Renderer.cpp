@@ -370,7 +370,99 @@ void Renderer::Run()
 	}
 }
 
+#pragma region Uninitialization
 void Renderer::Destroy()
 {
+	DEBUG_LOG("Destroying...", LOGTYPE_INFO)
+
+	DestroySwapchain();
+	DestroyDevice();
+	DestroyFactory();
+
 	context.Destroy();
+
+	DEBUG_LOG("Destroy success", LOGTYPE_VALIDATION)
 }
+
+void Renderer::DestroyFactory()
+{
+	DEBUG_LOG("Destroying Factory...", LOGTYPE_LOG)
+	factory = nullptr;
+
+#if _DEBUG
+	// Report live objects
+	MComPtr<IDXGIDebug1> dxgiDebug = nullptr;
+
+	const HRESULT hrDebugInterface = DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug));
+	if (SUCCEEDED(hrDebugInterface))
+	{
+		dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+	}
+	else
+	{
+		DEBUG_LOG("Validation layer uninitialized failed.", LOGTYPE_ERROR)
+}
+#endif
+}
+
+void Renderer::DestroyDevice()
+{
+	// Synchronization
+	{
+		CloseHandle(deviceFenceEvent);
+		DEBUG_LOG("Destroy Device Fence Event...", LOGTYPE_LOG);
+		deviceFenceEvent = nullptr;
+
+		DEBUG_LOG("Destroying Device Fence...", LOGTYPE_LOG);
+		deviceFence = nullptr;
+	}
+
+	// Queue
+	{
+		// GFX
+		{
+			DEBUG_LOG("Destroying Graphics Queue...", LOGTYPE_LOG);
+			graphicsQueue = nullptr;
+		}
+	}
+
+#if SA_DEBUG
+	// Validation Layers (device-level)
+	if (VLayerCallbackCookie)
+	{
+		MComPtr<ID3D12InfoQueue1> infoQueue = nullptr;
+
+		const HRESULT hrQueryInfoQueue = device->QueryInterface(IID_PPV_ARGS(&infoQueue));
+		if (SUCCEEDED(hrQueryInfoQueue))
+		{
+			infoQueue->UnregisterMessageCallback(VLayerCallbackCookie);
+			VLayerCallbackCookie = 0;
+		}
+	}
+#endif
+
+	DEBUG_LOG("Destroying Device...", LOGTYPE_LOG);
+	device = nullptr;
+}
+
+void Renderer::DestroySwapchain()
+{
+	{
+		CloseHandle(swapchainFenceEvent);
+		DEBUG_LOG("Destroying Swapchain Fence Event...", LOGTYPE_LOG);
+		swapchainFenceEvent = nullptr;
+
+		DEBUG_LOG("Destroying Swapchain Fence...", LOGTYPE_LOG);
+		swapchainFence = nullptr;
+	}
+
+	for (uint32_t i = 0; i < bufferingCount; ++i)
+	{
+		DEBUG_LOG(std::format("Destroying Swapchain image {}...", i), LOGTYPE_LOG);
+		swapchainImages[i] = nullptr;
+	}
+
+	DEBUG_LOG("Destroying Swapchain...", LOGTYPE_LOG);
+	swapchain = nullptr;
+}
+#pragma endregion

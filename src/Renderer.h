@@ -43,4 +43,7 @@ private:
 	int InitDevice();
 	int InitSwapchain();
 
+	void DestroyFactory();
+	void DestroyDevice();
+	void DestroySwapchain();
 };
