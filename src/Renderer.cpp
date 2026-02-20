@@ -93,6 +93,7 @@ int Renderer::Init()
 	INITRES(InitDevice());
 	INITRES(InitSwapchain());
 	INITRES(InitCommands());
+	INITRES(InitSceneTextures());
 
 	return initializationResult;
 }
@@ -403,11 +404,127 @@ int Renderer::InitCommands()
 
 	return EXIT_SUCCESS;
 }
+
+int Renderer::InitSceneTextures()
+{
+	// Color RT View Heap
+	{
+		const D3D12_DESCRIPTOR_HEAP_DESC desc{
+			.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+			.NumDescriptors = bufferingCount,
+			.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+			.NodeMask = 0,
+		};
+
+		const HRESULT hrCreateHeap = device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&sceneRTViewHeap));
+		if (FAILED(hrCreateHeap))
+		{
+			DEBUG_LOG("Create color RenderTarget ViewHeap failed", LOGTYPE_ERROR);
+			return EXIT_FAILURE;
+		}
+		else
+		{
+			const LPCWSTR name = L"SceneRTViewHeap";
+			sceneRTViewHeap->SetName(name);
+
+			DEBUG_LOG("Create color RenderTarget ViewHeap Success", LOGTYPE_LOG);
+		}
+
+
+		// Create RT Views (for each frame)
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = sceneRTViewHeap->GetCPUDescriptorHandleForHeapStart();
+		const UINT rtvOffset = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+		for (uint32_t i = 0; i < bufferingCount; ++i)
+		{
+			device->CreateRenderTargetView(swapchainImages[i].Get(), nullptr, rtvHandle);
+			rtvHandle.ptr += rtvOffset;
+		}
+	}
+
+	// Depth Scene Texture
+	{
+		int* sizeX = new int();
+		int* sizeY = new int();
+		context.GetWindowSize(sizeX, sizeY);
+
+		const D3D12_RESOURCE_DESC desc{
+			.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+			.Alignment = 0u,
+			.Width = static_cast<uint32_t>(*sizeX),
+			.Height = static_cast<uint32_t>(*sizeY),
+			.DepthOrArraySize = 1,
+			.MipLevels = 1,
+			.Format = sceneDepthFormat,
+			.SampleDesc = DXGI_SAMPLE_DESC{
+				.Count = 1,
+				.Quality = 0,
+			},
+			.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+			.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL,
+		};
+
+		delete sizeX; delete sizeY;
+
+		const D3D12_HEAP_PROPERTIES heap{
+			.Type = D3D12_HEAP_TYPE_DEFAULT,
+			.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+			.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
+			.CreationNodeMask = 1,
+			.VisibleNodeMask = 1,
+		};
+
+		const HRESULT hrCreateDepthTexture = device->CreateCommittedResource(&heap, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &sceneDepthClearValue, IID_PPV_ARGS(&sceneDepthTexture));
+		if (FAILED(hrCreateDepthTexture))
+		{
+			DEBUG_LOG("Create Scene Depth Texture failed", LOGTYPE_ERROR);
+			return EXIT_FAILURE;
+		}
+		else
+		{
+			const LPCWSTR name = L"SceneDepthTexture";
+			sceneDepthTexture->SetName(name);
+			DEBUG_LOG("Create Scene Depth Texture success", LOGTYPE_LOG);
+		}
+	}
+
+	// Depth Scene RT View Heap
+	{
+		const D3D12_DESCRIPTOR_HEAP_DESC desc{
+			.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+			.NumDescriptors = 1,
+			.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+			.NodeMask = 0,
+		};
+
+		const HRESULT hrCreateHeap = device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&sceneDepthRTViewHeap));
+		if (FAILED(hrCreateHeap))
+		{
+			DEBUG_LOG("Create Depth ViewHeap failed!", LOGTYPE_ERROR);
+			return EXIT_FAILURE;
+		}
+		else
+		{
+			const LPCWSTR name = L"SceneDepthViewHeap";
+			sceneDepthRTViewHeap->SetName(name);
+
+			DEBUG_LOG("Create Depth ViewHeap success", LOGTYPE_LOG);
+		}
+
+		/**
+		* Create Depth View to use sceneDepthTexture as a render target.
+		*/
+		device->CreateDepthStencilView(sceneDepthTexture.Get(), nullptr, sceneDepthRTViewHeap->GetCPUDescriptorHandleForHeapStart());
+	}
+
+	DEBUG_LOG("Scene textures initialisation success!", LOGTYPE_VALIDATION);
+	return EXIT_SUCCESS;
+}
 #pragma endregion
 
 void Renderer::Run()
 {
-	DEBUG_LOG("Start running", LOGTYPE_INFO)
+	DEBUG_LOG("Start running...", LOGTYPE_INFO)
 	while (!context.ShouldClose())
 	{
 		context.StartFrame();
@@ -419,6 +536,7 @@ void Renderer::Destroy()
 {
 	DEBUG_LOG("Destroying...", LOGTYPE_INFO);
 
+	DestroySceneTextures();
 	DestroyCommands();
 	DestroySwapchain();
 	DestroyDevice();
@@ -521,5 +639,17 @@ void Renderer::DestroyCommands()
 		DEBUG_LOG(std::format("Destroying Command Allocator {}...", i), LOGTYPE_LOG);
 		cmdAllocs[i] = nullptr;
 	}
+}
+
+void Renderer::DestroySceneTextures()
+{
+	DEBUG_LOG("Destroying Scene Color RT ViewHeap...", LOGTYPE_LOG);
+	sceneRTViewHeap = nullptr;
+
+	DEBUG_LOG("Destroying Scene Depth RT ViewHeap...", LOGTYPE_LOG);
+	sceneDepthRTViewHeap = nullptr;
+
+	DEBUG_LOG("Destroying Scene Depth Texture...", LOGTYPE_LOG);
+	sceneDepthTexture = nullptr;
 }
 #pragma endregion

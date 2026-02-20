@@ -8,6 +8,9 @@
 template <typename T>
 using MComPtr = Microsoft::WRL::ComPtr<T>;
 
+const DXGI_FORMAT sceneColorFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+constexpr float sceneClearColor[] = { 0.0f, 0.1f, 0.2f, 1.0f };
+
 class Renderer
 {
 public:
@@ -40,15 +43,26 @@ private:
 
 	std::array<MComPtr<ID3D12CommandAllocator>, bufferingCount> cmdAllocs;
 
+	// Use Swapchain backbuffer texture as color output.
+	MComPtr<ID3D12DescriptorHeap> sceneRTViewHeap; 
+
+	// = Depth =
+	const DXGI_FORMAT sceneDepthFormat = DXGI_FORMAT_D16_UNORM;
+	const D3D12_CLEAR_VALUE sceneDepthClearValue{ .Format = sceneDepthFormat, .DepthStencil = { 1.0f, 0 } };
+	MComPtr<ID3D12Resource> sceneDepthTexture;
+	MComPtr<ID3D12DescriptorHeap> sceneDepthRTViewHeap;
+
 private:
 
 	int InitFactory();
 	int InitDevice();
 	int InitSwapchain();
 	int InitCommands();
+	int InitSceneTextures();
 
 	void DestroyFactory();
 	void DestroyDevice();
 	void DestroySwapchain();
 	void DestroyCommands();
+	void DestroySceneTextures();
 };
