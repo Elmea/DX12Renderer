@@ -4,28 +4,23 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 
-#include "ElmeasMaths/RedfoxMaths.hpp"
-
 #include <string>
 
 class Context
 {
 public:
-
+	GLFWwindow* window;
 
 public:
-	int Init(int winSizeX, int winSizeY, std::string name);
+	int Init(uint32_t winSizeX, uint32_t winSizeY, std::string name);
 	void Destroy();
 
 	void StartFrame();
 
 	bool ShouldClose();
 
-	RedFoxMaths::Float2 GetWindowSize();
+	void GetWindowSize(int* width, int* height);
 
 private:
 
-	GLFWwindow* window;
-
-	int sizeX, sizeY;
 };

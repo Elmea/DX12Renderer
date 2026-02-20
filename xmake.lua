@@ -21,8 +21,6 @@ target("DX12Renderer")
     add_headerfiles("src/**.hpp")
     add_includedirs("src")
 
-    add_headerfiles("ThirdParty/ElmeasMaths/RedfoxMaths.hpp")
-
     -- Third Party
     add_headerfiles("ThirdParty/(**.h)")
     add_headerfiles("ThirdParty/(**.hpp)")

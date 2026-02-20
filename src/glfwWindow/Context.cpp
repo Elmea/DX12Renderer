@@ -2,15 +2,12 @@
 
 #include "Context.h"
 
-#define REDFOXMATHS_IMPLEMENTATION
-#include "ElmeasMaths/RedfoxMaths.hpp"
-
-int Context::Init(int winSizeX, int winSizeY, std::string name)
+int Context::Init(uint32_t winSizeX, uint32_t winSizeY, std::string name)
 {
 	glfwInit();
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	window = glfwCreateWindow(winSizeX, winSizeX, name.c_str(), nullptr, nullptr);
+	window = glfwCreateWindow(winSizeX, winSizeY, name.c_str(), nullptr, nullptr);
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); // GLFW_CURSOR_DISABLED);
 
@@ -43,7 +40,7 @@ bool Context::ShouldClose()
 	return glfwWindowShouldClose(window);
 }
 
-RedFoxMaths::Float2 Context::GetWindowSize()
+void Context::GetWindowSize(int* width, int* height)
 {
-	return RedFoxMaths::Float2(sizeX, sizeY);
+	glfwGetWindowSize(window, width, height);
 }

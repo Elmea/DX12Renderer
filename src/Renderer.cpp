@@ -1,4 +1,5 @@
 #include <DXGIDebug.h>
+#include <format>
 
 #include "Renderer.h"
 #include "DebugMacros.h"
@@ -272,9 +273,89 @@ int Renderer::InitSwapchain()
 {
 	DEBUG_LOG("Initializing Swapchain...", LOGTYPE_LOG)
 
+	int *sizeX = new int();
+	int *sizeY = new int();
+	context.GetWindowSize(sizeX, sizeY);
+
+	const DXGI_SWAP_CHAIN_DESC1 desc{
+		.Width = static_cast<uint32_t>(*sizeX),
+		.Height = static_cast<uint32_t>(*sizeY),
+		.Format = sceneColorFormat,
+		.Stereo = false,
+		.SampleDesc = {.Count = 1, .Quality = 0 },
+		.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+		.BufferCount = bufferingCount,
+		.Scaling = DXGI_SCALING_STRETCH,
+		.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
+		.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED,
+		.Flags = 0,
+	};
+
+	delete sizeX; delete sizeY;
+
+	MComPtr<IDXGISwapChain1> swapchain1;
+	const HRESULT hrSwapChainCreated = factory->CreateSwapChainForHwnd(graphicsQueue.Get(), glfwGetWin32Window(context.window), &desc, nullptr, nullptr, &swapchain1);
+	if (FAILED(hrSwapChainCreated))
+	{
+		DEBUG_LOG("Swapchain creation failed!", LOGTYPE_ERROR);
+		return EXIT_FAILURE;
+	}
+	else
+	{
+		DEBUG_LOG("Swapchain creation success!", LOGTYPE_LOG);
+	}
+
+	const HRESULT hrSwapChainCast = swapchain1.As(&swapchain);
+	if (FAILED(hrSwapChainCast))
+	{
+		DEBUG_LOG("Swapchain cast failed!", LOGTYPE_ERROR);
+		return EXIT_FAILURE;
+	}
 
 
-	DEBUG_LOG("Swapchain itinilisation not yet implemented", LOGTYPE_WARNING);
+	// Query back-buffers
+	for (uint32_t i = 0; i < bufferingCount; ++i)
+	{
+		const HRESULT hrSwapChainGetBuffer = swapchain->GetBuffer(i, IID_PPV_ARGS(&swapchainImages[i]));
+		if (FAILED(hrSwapChainGetBuffer))
+		{
+			DEBUG_LOG(std::format("Get Swapchain Buffer {} failed!", i), LOGTYPE_ERROR);
+			return EXIT_FAILURE;
+		}
+		else
+		{
+			const std::wstring name = L"SwapchainBackBuffer [" + std::to_wstring(i) + L"]";
+			swapchainImages[i]->SetName(name.data());
+
+			DEBUG_LOG(std::format("Get Swapchain Buffer {} success!", i), LOGTYPE_LOG);
+		}
+	}
+
+	// Synchronization
+	{
+		swapchainFenceEvent = CreateEvent(nullptr, false, false, nullptr);
+		if (!swapchainFenceEvent)
+		{
+			DEBUG_LOG("Swapchain fence event creation failed!", LOGTYPE_ERROR);
+			return EXIT_FAILURE;
+		}
+
+		const HRESULT hrSwapChainFenceCreated = device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&swapchainFence));
+		if (FAILED(hrSwapChainFenceCreated))
+		{
+			DEBUG_LOG("Swapchain fence creation failed!", LOGTYPE_ERROR);
+			return EXIT_FAILURE;
+		}
+		else
+		{
+			const LPCWSTR name = L"SwapchainFence";
+			swapchainFence->SetName(name);
+
+			DEBUG_LOG("Swapchain fence creation success!", LOGTYPE_LOG);
+		}
+	}
+
+	DEBUG_LOG("Swapchain initialized", LOGTYPE_VALIDATION);
 	return EXIT_SUCCESS;
 }
 
