@@ -22,6 +22,7 @@ private:
 	MComPtr<ID3D12Device> device;
 	MComPtr<ID3D12CommandQueue> graphicsQueue;
 	MComPtr<IDXGISwapChain3> swapchain;
+	MComPtr<ID3D12GraphicsCommandList1> cmdList;
 
 	HANDLE deviceFenceEvent;
 	MComPtr<ID3D12Fence> deviceFence;
@@ -37,13 +38,17 @@ private:
 	MComPtr<ID3D12Fence> swapchainFence;
 	std::array<uint32_t, bufferingCount> swapchainFenceValues{ 0u };
 
+	std::array<MComPtr<ID3D12CommandAllocator>, bufferingCount> cmdAllocs;
+
 private:
 
 	int InitFactory();
 	int InitDevice();
 	int InitSwapchain();
+	int InitCommands();
 
 	void DestroyFactory();
 	void DestroyDevice();
 	void DestroySwapchain();
+	void DestroyCommands();
 };

@@ -92,6 +92,7 @@ int Renderer::Init()
 	INITRES(InitFactory());
 	INITRES(InitDevice());
 	INITRES(InitSwapchain());
+	INITRES(InitCommands());
 
 	return initializationResult;
 }
@@ -359,6 +360,49 @@ int Renderer::InitSwapchain()
 	return EXIT_SUCCESS;
 }
 
+int Renderer::InitCommands()
+{
+	// Allocators
+	for (uint32_t i = 0; i < bufferingCount; ++i)
+	{
+		auto& cmdAlloc = cmdAllocs[i];
+
+		const HRESULT hrCmdAllocCreated = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAlloc));
+		if (FAILED(hrCmdAllocCreated))
+		{
+			DEBUG_LOG(std::format("Create command allocator {} failed!", i), LOGTYPE_ERROR);
+			return EXIT_FAILURE;
+		}
+		else
+		{
+			const std::wstring name = L"CommandAlloc [" + std::to_wstring(i) + L"]";
+			cmdAlloc->SetName(name.c_str());
+			DEBUG_LOG(std::format("Create command allocator {} success!", i), LOGTYPE_LOG);
+		}
+	}
+
+	// List
+	{
+		const HRESULT hrCmdListCreated = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAllocs[0].Get(), nullptr, IID_PPV_ARGS(&cmdList));
+		if (FAILED(hrCmdListCreated))
+		{
+			DEBUG_LOG("Create Command List failed!", LOGTYPE_ERROR);
+			return EXIT_FAILURE;
+		}
+		else
+		{
+			const LPCWSTR name = L"CommandList";
+			cmdList->SetName(name);
+
+			DEBUG_LOG("Create Command List success!", LOGTYPE_LOG);
+		}
+	}
+
+	// Command list must be closed because we will start the frame by Reset()
+	cmdList->Close();
+
+	return EXIT_SUCCESS;
+}
 #pragma endregion
 
 void Renderer::Run()
@@ -373,8 +417,9 @@ void Renderer::Run()
 #pragma region Uninitialization
 void Renderer::Destroy()
 {
-	DEBUG_LOG("Destroying...", LOGTYPE_INFO)
+	DEBUG_LOG("Destroying...", LOGTYPE_INFO);
 
+	DestroyCommands();
 	DestroySwapchain();
 	DestroyDevice();
 	DestroyFactory();
@@ -464,5 +509,17 @@ void Renderer::DestroySwapchain()
 
 	DEBUG_LOG("Destroying Swapchain...", LOGTYPE_LOG);
 	swapchain = nullptr;
+}
+
+void Renderer::DestroyCommands()
+{
+	DEBUG_LOG("Destroying Command List...", LOGTYPE_LOG);
+	cmdList = nullptr;
+
+	for (uint32_t i = 0; i < bufferingCount; ++i)
+	{
+		DEBUG_LOG(std::format("Destroying Command Allocator {}...", i), LOGTYPE_LOG);
+		cmdAllocs[i] = nullptr;
+	}
 }
 #pragma endregion
