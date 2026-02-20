@@ -4,6 +4,8 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 
+#include "ElmeasMaths/RedfoxMaths.hpp"
+
 #include <string>
 
 class Context
@@ -18,6 +20,8 @@ public:
 	void StartFrame();
 
 	bool ShouldClose();
+
+	RedFoxMaths::Float2 GetWindowSize();
 
 private:
 

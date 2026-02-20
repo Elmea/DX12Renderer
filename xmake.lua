@@ -1,6 +1,8 @@
 add_rules("mode.debug", "mode.release")
 add_rules("plugin.vsxmake.autoupdate")
 
+set_languages("cxx20")
+
 add_requires("glfw")
 add_requires("stb")
 
@@ -18,6 +20,8 @@ target("DX12Renderer")
     add_headerfiles("src/**.h")
     add_headerfiles("src/**.hpp")
     add_includedirs("src")
+
+    add_headerfiles("ThirdParty/ElmeasMaths/RedfoxMaths.hpp")
 
     -- Third Party
     add_headerfiles("ThirdParty/(**.h)")

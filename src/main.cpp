@@ -4,7 +4,7 @@ int main(int argc, char **argv)
 {
 	Renderer renderer;
 
-	if (renderer.Init() == EXIT_SUCCESS)
+	if (renderer.Init() == 0)
 		renderer.Run();
 
 	renderer.Destroy();

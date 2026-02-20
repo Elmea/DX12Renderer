@@ -1,6 +1,7 @@
 #pragma once
 #include "glfwWindow/Context.h"
 #include <dxgi1_6.h>
+#include <d3d12.h> 
 
 #include <wrl.h>
 template <typename T>
@@ -17,9 +18,20 @@ private:
 
 	Context context;
 	MComPtr<IDXGIFactory6> factory;
+	MComPtr<ID3D12Device> device;
+	MComPtr<ID3D12CommandQueue> graphicsQueue;
+
+	HANDLE deviceFenceEvent;
+	MComPtr<ID3D12Fence> deviceFence;
+	uint32_t deviceFenceValue = 1u;
+
+	const DXGI_FORMAT sceneColorFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+	const uint32_t bufferingCount = 3;
 
 private:
 
 	int InitFactory();
+	int InitDevice();
+	int InitSwapchain();
 
 };
